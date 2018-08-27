@@ -13,6 +13,8 @@
 #include "graphic_api.h"
 #include "uart_api.h"
 #include "robot_protocol.h"
+#include "Robot_Motion.h"
+#include "init.h"
 
 #define MAX3(x,y,z)   (((x)>(y))?((x)>(z))?(x):(z):((y)>(z))?(y):(z))
 #define MIN3(x,y,z)   (((x)>(y))?((y)>(z))?(z):(y):((x)>(z))?(z):(x))
@@ -70,21 +72,13 @@ typedef struct
     BYTE end_y;
 }Range;
 
-/*
-typedef struct
-{
-    BYTE min_x;
-    BYTE max_x;
-    BYTE min_y;
-    BYTE 
-}*/
-
 HSV ChangetoHSV(U16 rgb);
-int FindColor(HSV hsv, U16 rgb);
+int FindColor(U16 rgb); 
 int ColorLabelingFULL(U16 color, vector<pair<pair<U32, POS>, Range> > &area, U16 *input);
 int ColorLabeling(U16 color, vector<pair<U32, POS> > &area, Range &range, U16 *input);
 bool ISYELLOW(U16 rgb);
 bool ISRED(U16 rgb);
 bool ISGREEN(U16 rgb);
+void WalkOnGreenBrigde(int &number);
 
 #endif
