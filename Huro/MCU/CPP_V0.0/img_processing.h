@@ -18,6 +18,10 @@
 
 #define MAX3(x,y,z)   (((x)>(y))?((x)>(z))?(x):(z):((y)>(z))?(y):(z))
 #define MIN3(x,y,z)   (((x)>(y))?((y)>(z))?(z):(y):((x)>(z))?(z):(x))
+
+#define max3(x, y, z) ((x) > (y) ? (x) : (y)) > (z) ? ((x) > (y) ? (x) : (y)) : (z)
+#define min3(x, y, z) ((x) > (y) ? (y) : (x)) > (z) ? (z) : ((x) > (y) ? (y) : (x))
+
 #define abs(x)        ((x)<0?-(x):(x))
 #define height        120
 #define width         180
@@ -39,9 +43,9 @@ typedef U8 BYTE;
 
 typedef struct
 {
-    BYTE red : 5;
-    BYTE green : 6;
-    BYTE blue : 5;
+    BYTE red;
+    BYTE green;
+    BYTE blue;
 }RGB;
 
 typedef struct
@@ -53,9 +57,9 @@ typedef struct
 
 typedef struct
 {
-    BYTE H : 8;
-    BYTE S : 8;
-    BYTE V : 8;
+    BYTE H;
+    BYTE S;
+    BYTE V;
 }HSV;
 
 typedef struct
@@ -76,9 +80,17 @@ HSV ChangetoHSV(U16 rgb);
 int FindColor(U16 rgb); 
 int ColorLabelingFULL(U16 color, vector<pair<pair<U32, POS>, Range> > &area, U16 *input);
 int ColorLabeling(U16 color, vector<pair<U32, POS> > &area, Range &range, U16 *input);
+bool ISBLACK(U16 rgb);
 bool ISYELLOW(U16 rgb);
 bool ISRED(U16 rgb);
+bool ISBLUE(U16 rgb);
 bool ISGREEN(U16 rgb);
+bool ISORANGE(U16 rgb);
 void WalkOnGreenBrigde(int &number);
+void YellowGate(int &number);
+void Red_Stair(int &number);
+void Up_Red_Stair(int &number);
+void Go_Down_Red_Stair(int &number);
+void Blue_Hurdle(int &number);
 
 #endif

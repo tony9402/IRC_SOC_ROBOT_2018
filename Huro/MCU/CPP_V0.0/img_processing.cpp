@@ -17,19 +17,16 @@ HSV ChangetoHSV(U16 buf)
     rgb.green = green6(buf);
     rgb.blue = blue5(buf);
 
-    //It don't exist about changing 565bit to 888bit
-    
-    RGB888 rgb888;
-    rgb888.red = rgb.red << 3 | rgb.red >> 2;
-    rgb888.green = rgb.green << 2 | rgb.green >> 4;
-    rgb888.blue = rgb.blue << 3 | rgb.blue >> 2;
-    
+    BYTE RED = rgb.red << 3 | rgb.red >> 2;
+    BYTE GREEN = rgb.green << 2 | rgb.green >> 4;
+    BYTE BLUE = rgb.blue << 3 | rgb.blue >> 2;
+
     HSV out;
 
     BYTE _max_, _min_;
 
-    _max_ = MAX3(rgb888.red, rgb888.green, rgb888.blue);
-    _min_ = MIN3(rgb888.red, rgb888.green, rgb888.blue);
+    _max_ = max3(RED, GREEN, BLUE);
+    _min_ = min3(RED, GREEN, BLUE);
 
     out.V = _max_;
     if(!out.V)
@@ -46,63 +43,68 @@ HSV ChangetoHSV(U16 buf)
         return out;
     }
 
-    if(_max_ == rgb888.red)
+    if(_max_ == RED)
     {
-        out.H = 0 + 43 * (rgb888.green - rgb888.blue) / (_max_ - _min_);
+        out.H = 0 + 43 * (GREEN - BLUE) / (_max_ - _min_);
     }
-    else if(_max_ == rgb888.green)
+    else if(_max_ == GREEN)
     {
-        out.H = 85 + 43 * (rgb888.blue - rgb888.red) / (_max_ - _min_);
+        out.H = 85 + 43 * (BLUE - RED) / (_max_ - _min_);
     }
     else
     {
-        out.H = 171 + 43 * (rgb888.red - rgb888.green) / (_max_ - _min_);
+        out.H = 171 + 43 * (RED - GREEN) / (_max_ - _min_);
     }
     return out;
 }
 
-//아직 색상 값 범위 맞춰야 함
 int FindColor(U16 rgb)
+{
+    if(ISBLACK(rgb))return IsBlack;
+    if(ISRED(rgb))return IsRed;
+    if(ISGREEN(rgb))return IsGreen;
+    if(ISBLUE(rgb))return IsBlue;
+    if(ISYELLOW(rgb))return IsYellow;
+    if(ISORANGE(rgb))return IsOrange;
+}
+
+bool ISBLACK(U16 rgb)
 {
     BYTE red = red5(rgb);
     BYTE green = green6(rgb);
     BYTE blue = blue5(rgb);
 
-    HSV hsv = ChangetoHSV(rgb);
-
-    if(abs(blue-red) <= 2 && abs((green>>1) - blue) <= 3 && abs((red - (green>>1)) <= 3) && red < 8 && green < 15 && blue < 8)
-    {
-        return IsBlack;
-    }
-    if(hsv.H <= 20 || hsv.H > 220)
-    {
-        return IsRed;
-    }
-    if(55<=hsv.H&&hsv.H<=120&&25<=hsv.S&&25<=hsv.V)
-    {
-        //초록색은 어느정도 맞춤
-        return IsGreen;
-    }   
-    if(140 <= hsv.H && hsv.H <= 180)
-    {
-        return IsBlue;
-    }
-    if(20  <= hsv.H && hsv.H <= 35)
-    {
-        return IsOrange;
-    }
-    if(35  <= hsv.H && hsv.H <= 70)
-    {
-        return IsYellow;
-    }
-    return 0;
+    return (abs(blue-red) <= 2 && abs((green>>1) - blue) <= 3 && abs((red - (green>>1)) <= 3) && red < 8 && green < 15 && blue < 8);
 }
 
-//다리는 인식, 하지만 값을 조금 더 수정해야함
+bool ISRED(U16 rgb)
+{
+    HSV hsv = ChangetoHSV(rgb);
+    return (hsv.H <= 10 || hsv.H >= 225);
+}
+
 bool ISGREEN(U16 rgb)
 {
     HSV hsv = ChangetoHSV(rgb); 
-    return (55<=hsv.H&&hsv.H<=120&&25<=hsv.S&&25<=hsv.V); //&&hsv.V<=245
+    return (55<=hsv.H&&hsv.H<=120&&25<=hsv.S&&25<=hsv.V);
+}
+
+bool ISBLUE(U16 rgb)
+{
+    HSV hsv = ChangetoHSV(rgb);
+    return (120<=hsv.H&&hsv.H<=165);
+}
+
+bool ISYELLOW(U16 rgb)
+{
+    HSV hsv = ChangetoHSV(rgb);
+    return (25<=hsv.H&&hsv.H<=55&&50<=hsv.S&&30<=hsv.V&&hsv.V<=250);
+}
+
+bool ISORANGE(U16 rgb)
+{
+    HSV hsv = ChangetoHSV(rgb);
+    return ((230<=hsv.H||hsv.H<=15)&&hsv.H<=180);
 }
 
 //전체화면 라벨링
@@ -506,3 +508,354 @@ void WalkOnGreenBrigde(int &number)
 
     free(input);
 }
+
+#define YellowGate_area_start 500
+#define YellowGate_area_end 3500
+
+void YellowGate(int &number)
+{
+    U16 *input = (U16*)malloc(2*180*120);
+    read_fpga_video_data(input);
+    short i,j;
+    static bool Yellow_Gate_Check = false;
+
+    for(i=0;i<height;i++)
+    {
+        for(j=0;j<width;j++)
+        {
+            if(ISYELLOW(input[pos(i,j)]))
+            {
+                input[pos(i,j)] = 0xFFFF;
+            }
+            else
+            {
+                input[pos(i,j)] = 0x0000;
+            }
+        }
+    }   
+
+    vector<pair<pair<U32,POS>,Range > > area;
+
+    ColorLabelingFULL(0xFFFF,area,input);
+    U16 Gate_Count = 0;
+    U32 Max_area = 0;
+    U16 temp_i = 0;
+
+    for(i=0;i<area.size();i++)
+    {
+        if(Max_area < area[i].first.first && YellowGate_area_start<=area[i].first.first&&area[i].first.first<=YellowGate_area_end)
+        {
+            Max_area = area[i].first.first;
+            temp_i = i + 1;
+        }
+    }
+
+    //printf("%d %d\n",temp_i-1,area[temp_i-1].first.first);
+
+    for(i=0;i<height;i++)
+    {
+        for(j=0;j<width;j++)
+        {
+            if(temp_i&&input[pos(i,j)] == temp_i)
+            {
+                Gate_Count++;
+                input[pos(i,j)] = 0xFFFF;
+            }
+            else
+            {
+                input[pos(i,j)] = 0x0000;
+            }
+        }
+    }
+
+    if(Gate_Count>=1)
+    {
+        if(!Yellow_Gate_Check){
+            Motion_Command(SoundPlay);
+            Yellow_Gate_Check = true;
+        }
+    }
+    else
+    {
+        if(Yellow_Gate_Check)
+        {
+            number++;
+            Yellow_Gate_Check = false;
+        }
+    }
+
+    draw_fpga_video_data_full(input);
+    flip();
+    free(input);
+    return;
+}
+
+void Red_Stair(int &number)
+{
+    U16 *input = (U16*)malloc(2*180*120);
+    read_fpga_video_data(input);
+    static bool Look_Down_Check = false;
+    static bool Find_Red_Stair_Check = false;
+
+    short i,j;
+
+    for(i=0;i<height;i++)
+    {
+        for(j=0;j<width;j++)
+        {
+            if(ISRED(input[pos(i,j)]))
+            {
+                input[pos(i,j)] = 0xFFFF;
+            }
+            else
+            {
+                input[pos(i,j)] = 0x0000;
+            }
+        }
+    }
+
+    if(!Look_Down_Check){
+        vector<pair<pair<U32, POS>, Range> > area;
+        ColorLabelingFULL(0xFFFF,area,input);
+        U32 max_area=0;
+        U16 temp_i=0;
+
+        for(i=0;i<area.size();i++)
+        {
+            if(area[i].first.first>=2000&&area[i].first.first>max_area)
+            {
+                max_area = area[i].first.first;
+                temp_i = i + 1;
+            }
+        }
+        
+        for(i=0;i<height;i++)
+        {
+            for(j=0;j<width;j++)
+            {
+                if(input[pos(i,j)] == temp_i)
+                {
+                    input[pos(i,j)] = 0xFFFF;
+                }
+                else
+                {
+                    input[pos(i,j)] = 0x0000;
+                }
+            }
+        }
+
+
+        if(max_area == 0){
+            Motion_Command(GOSTRAIGHT);
+            draw_fpga_video_data_full(input);
+            flip();
+            free(input);
+            return;
+        }
+
+        POS pos = area[temp_i-1].first.second;
+        if(pos.y >= 65)
+        {
+            Motion_Command(GOSTRAIGHT);
+        }
+        else
+        {
+            Motion_Command(SoundPlay);
+            Motion_Command(LOOKDOWN90);
+            DelayLoop(10000000);
+            read_fpga_video_data(input);
+            draw_fpga_video_data_full(input);
+            flip();
+            Look_Down_Check = true;
+        }
+    }
+    else if(Look_Down_Check)
+    {
+        vector<pair<U32,POS> > area;
+        Range range;
+        range.start_x = 0;
+        range.end_x = 180;
+        range.start_y = 60;
+        range.end_y = 120;
+        ColorLabeling(0xFFFF, area,range,input);
+
+        U32 max_area = 0;
+        U16 temp_i = 0;
+
+        if(area.size() != 0)
+        {
+            for(i=0;i<area.size();i++)
+            {
+                if(max_area<area[i].first)
+                {
+                    max_area = area[i].first;
+                    temp_i = i+1;
+                }
+            }
+
+            for(i=range.start_y;i<range.end_y;i++)
+            {
+                for(j=range.start_x;j<range.end_x;j++)
+                {
+                    if(input[pos(i,j)]==temp_i)
+                    {
+                        input[pos(i,j)] = 0xFFFF;
+                    }
+                    else
+                    {
+                        input[pos(i,j)] = 0x0000;
+                    }
+                }
+            }
+
+            POS pos = area[temp_i - 1].second;
+            printf("%d\n",max_area);
+            if(max_area<=4000)
+            {
+                Motion_Command(GOSTRAIGHT_LOOKDOWN90);
+            }
+            else
+            {
+                draw_fpga_video_data_full(input);
+                flip();
+                number++;
+                Find_Red_Stair_Check = true;
+            }
+        }
+        else
+        {
+            Motion_Command(SoundPlay);
+            Motion_Command(GOSTRAIGHT_LOOKDOWN90);
+        }
+    }
+
+
+    draw_fpga_video_data_full(input);
+    flip();
+    free(input);
+    return;
+}
+
+void Up_Red_Stair(int &number)
+{
+    //
+    //Motion_Command(UP_RED_STAIR);
+    U16 *input = (U16*)malloc(2*180*120);
+    read_fpga_video_data(input);
+
+    Motion_Command(SoundPlay);
+    Motion_Command(GOSTRAIGHT_LOOKDOWN90);
+    
+    Motion_Command(RED_DUMBLING);
+    number++;
+    draw_fpga_video_data_full(input);
+    flip();
+    free(input);
+    return;
+}
+
+void Go_Down_Red_Stair(int &number)
+{
+    U16 *input = (U16*)malloc(2*180*120);
+    short i, j;
+    static bool LOOKDOWN90_CHECK = false;
+
+    if(!LOOKDOWN90_CHECK)
+    {
+        LOOKDOWN90_CHECK = true;
+        Motion_Command(LOOKDOWN90);
+    }
+
+    read_fpga_video_data(input);
+    
+    for(i=0;i<height;i++)
+    {
+        for(j=0;j<width;j++)
+        {
+            if(ISRED(input[pos(i,j)]))
+            {
+                input[pos(i,j)] = 0xFFFF;
+            }
+            else
+            {
+                input[pos(i,j)] = 0x0000;
+            }
+        }
+    }
+    
+    vector<pair<U32, POS> > area;
+    Range range;
+    range.start_x = 0;
+    range.end_x = 180;
+    range.start_y = 60;
+    range.end_y = 120;
+    ColorLabeling(0xFFFF, area, range,input);
+
+    U32 max_area = 0;
+    U16 temp_i = 0;
+    
+    for(i=0;i<area.size();i++)
+    {
+        if(max_area < area[i].first)
+        {
+            max_area = area[i].first;
+            temp_i = i + 1;
+        }
+    }
+
+    for(i=0;i<height;i++)
+    {
+        for(j=0;j<width;j++)
+        {
+            if(input[pos(i,j)] == temp_i)input[pos(i,j)]=0xFFFF;
+            else input[pos(i,j)] = 0x0000;
+        }
+    }
+
+    if(max_area <= 550)
+    {
+        Motion_Command(RED_DOWN);
+        number++;
+    }
+    else
+    {
+        Motion_Command(GOSTRAIGHT_LOOKDOWN90);
+    }
+
+
+
+    draw_fpga_video_data_full(input);
+    flip();
+    free(input);
+    return;
+}
+
+void Blue_Hurdle(int &number)
+{
+    U16 *input = (U16*)malloc(2*180*120);
+    read_fpga_video_data(input);
+
+    short i, j;
+    for(i=0;i<height;i++)
+    {
+        for(j=0;j<width;j++)
+        {
+            if(ISBLUE(input[pos(i,j)]))
+            {
+                input[pos(i,j)] = 0xFFFF;
+            }
+            else
+            {
+                input[pos(i,j)] = 0x0000;
+            }
+        }
+    }
+
+
+
+    draw_fpga_video_data_full(input);
+    flip();
+    free(input);
+    return;
+}
+

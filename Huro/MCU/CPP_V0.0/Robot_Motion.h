@@ -14,12 +14,17 @@
 #include "amazon2_sdk.h"
 #include "uart_api.h"
 
-#define GOSTRAIGHT      15
-#define GOLEFT          8
-#define GORIGHT         7
-#define TURNLEFT        11
-#define TURNRIGHT       10
-#define SoundPlay       
+#define GOSTRAIGHT             1
+#define GOSTRAIGHT_LOOKDOWN90  2
+#define RED_DUMBLING           3
+#define RED_DOWN               4
+#define GOLEFT                 8
+#define GORIGHT                7
+#define TURNLEFT               11
+#define TURNRIGHT              10
+#define LOOKDOWN90             13
+#define SoundPlay              24
+#define UP_RED_STAIR           27
 
 void Motion_Command(U8 Message_Num);
 void wait_for_stop();
