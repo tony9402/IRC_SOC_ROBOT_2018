@@ -19,8 +19,8 @@
 #define MAX3(x,y,z)   (((x)>(y))?((x)>(z))?(x):(z):((y)>(z))?(y):(z))
 #define MIN3(x,y,z)   (((x)>(y))?((y)>(z))?(z):(y):((x)>(z))?(z):(x))
 
-#define max3(x, y, z) ((x) > (y) ? (x) : (y)) > (z) ? ((x) > (y) ? (x) : (y)) : (z)
-#define min3(x, y, z) ((x) > (y) ? (y) : (x)) > (z) ? (z) : ((x) > (y) ? (y) : (x))
+#define max3(x, y, z) ((x)>(y)?(x):(y))>(z)?((x)>(y)?(x):(y)):(z)
+#define min3(x, y, z) ((x)>(y)?(y):(x))>(z)?(z):((x)>(y)?(y):(x))
 
 #define abs(x)        ((x)<0?-(x):(x))
 #define height        120
@@ -41,6 +41,7 @@ using namespace std;
 
 typedef U8 BYTE;
 
+//RGB 16bit
 typedef struct
 {
     BYTE red;
@@ -48,6 +49,7 @@ typedef struct
     BYTE blue;
 }RGB;
 
+//RGB 24bit
 typedef struct
 {
     BYTE red;
@@ -55,6 +57,7 @@ typedef struct
     BYTE blue;
 }RGB888;
 
+//HSV
 typedef struct
 {
     BYTE H;
@@ -62,12 +65,14 @@ typedef struct
     BYTE V;
 }HSV;
 
+//x, y좌표
 typedef struct
 {
     BYTE x;
     BYTE y;
 }POS;
 
+//범위
 typedef struct
 {
     BYTE start_x;

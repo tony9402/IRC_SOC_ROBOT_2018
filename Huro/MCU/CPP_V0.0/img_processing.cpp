@@ -7,8 +7,18 @@
 
 #include "img_processing.h"
 
+#define Labeling1 vector<pair<pair<U32,POS>, Range> > area;
+#define Labeling2 vector<pair<U32, POS> > area;
+
 using namespace std;
 
+//Range Check
+bool IsVaild(U16 y, U16 x, Range range)
+{
+    return range.start_y<=y&&y<range.end_y&&range.start_x<=x&&x<range.end_x;
+}
+
+//RGB->HSV
 HSV ChangetoHSV(U16 buf)
 {
     RGB rgb;
@@ -58,6 +68,7 @@ HSV ChangetoHSV(U16 buf)
     return out;
 }
 
+//Check_Color
 int FindColor(U16 rgb)
 {
     if(ISBLACK(rgb))return IsBlack;
@@ -68,6 +79,7 @@ int FindColor(U16 rgb)
     if(ISORANGE(rgb))return IsOrange;
 }
 
+//BLACK_CHECK
 bool ISBLACK(U16 rgb)
 {
     BYTE red = red5(rgb);
@@ -77,30 +89,37 @@ bool ISBLACK(U16 rgb)
     return (abs(blue-red) <= 2 && abs((green>>1) - blue) <= 3 && abs((red - (green>>1)) <= 3) && red < 8 && green < 15 && blue < 8);
 }
 
+//RED_CHECK
+//NOT_YET
 bool ISRED(U16 rgb)
 {
     HSV hsv = ChangetoHSV(rgb);
     return (hsv.H <= 10 || hsv.H >= 225);
 }
 
+//GREEN_CHECK
 bool ISGREEN(U16 rgb)
 {
     HSV hsv = ChangetoHSV(rgb); 
     return (55<=hsv.H&&hsv.H<=120&&25<=hsv.S&&25<=hsv.V);
 }
 
+//BLUE_CHECK
 bool ISBLUE(U16 rgb)
 {
     HSV hsv = ChangetoHSV(rgb);
-    return (120<=hsv.H&&hsv.H<=165);
+    return (120<=hsv.H&&hsv.H<=165&&35<=hsv.S&&30<=hsv.V&&hsv.V<=250);
 }
 
+//YELLOW_CHECK
 bool ISYELLOW(U16 rgb)
 {
     HSV hsv = ChangetoHSV(rgb);
     return (25<=hsv.H&&hsv.H<=55&&50<=hsv.S&&30<=hsv.V&&hsv.V<=250);
 }
 
+//ORANGE_CHECK
+//NOT_YET
 bool ISORANGE(U16 rgb)
 {
     HSV hsv = ChangetoHSV(rgb);
@@ -202,6 +221,7 @@ int ColorLabelingFULL(U16 color, vector<pair<pair<U32, POS>, Range> > &area, U16
     return count;
 }
 
+//Range_Labeling
 int ColorLabeling(U16 color, vector<pair<U32, POS> > &area, Range &range, U16 *input)
 {
     int count = 0;
@@ -266,6 +286,7 @@ int ColorLabeling(U16 color, vector<pair<U32, POS> > &area, Range &range, U16 *i
     return count;
 }
 
+//GREENBRIGDE 6
 void WalkOnGreenBrigde(int &number)
 {
     short i, j;
@@ -512,6 +533,7 @@ void WalkOnGreenBrigde(int &number)
 #define YellowGate_area_start 500
 #define YellowGate_area_end 3500
 
+//Not Use
 void YellowGate(int &number)
 {
     U16 *input = (U16*)malloc(2*180*120);
@@ -590,6 +612,7 @@ void YellowGate(int &number)
     return;
 }
 
+//RED 2_1
 void Red_Stair(int &number)
 {
     U16 *input = (U16*)malloc(2*180*120);
@@ -736,6 +759,7 @@ void Red_Stair(int &number)
     return;
 }
 
+//RED 2_2
 void Up_Red_Stair(int &number)
 {
     //
@@ -754,6 +778,7 @@ void Up_Red_Stair(int &number)
     return;
 }
 
+//RED 2_3
 void Go_Down_Red_Stair(int &number)
 {
     U16 *input = (U16*)malloc(2*180*120);
@@ -830,19 +855,74 @@ void Go_Down_Red_Stair(int &number)
     return;
 }
 
+//BLUE 4
 void Blue_Hurdle(int &number)
 {
+    static bool DOWN_CHECK = false;
+
+    if(!DOWN_CHECK)
+    {
+        DOWN_CHECK = true;
+        Motion_Command(LOOKDOWN90);
+        DelayLoop(10000000);
+    }
+
     U16 *input = (U16*)malloc(2*180*120);
     read_fpga_video_data(input);
 
     short i, j;
+    Range range;
+    range.start_x = 0;
+    range.end_x = 180;
+    range.start_y = 60;
+    range.end_y = 120;
     for(i=0;i<height;i++)
     {
         for(j=0;j<width;j++)
         {
-            if(ISBLUE(input[pos(i,j)]))
+            if(IsVaild(i,j,range))
             {
-                input[pos(i,j)] = 0xFFFF;
+                if(FindColor(input[pos(i,j)]) == IsBlue)
+                {
+                    input[pos(i,j)] = 0xFFFF;
+                }
+                else
+                {
+                    input[pos(i,j)] = 0x0000;
+                }
+            }
+            else
+            {
+                input[pos(i,j)] = 0x0000;
+            }
+        }
+    }
+    
+    //머리를 90도 밑으로 내리기 때문에 전체 라벨링 보단 일부 라벨링으로 돌리는게 더 낫다.
+    vector<pair<U32, POS> > area;
+    ColorLabeling(0xFFFF,area,range,input);
+    //vector<pair<pair<U32,POS>,Range > > area;
+    //ColorLabelingFULL(0xFFFF,area,input);
+
+    U32 max_area = 0;
+    U16 temp_i = 0;
+
+    for(i=0;i<area.size();i++)
+    {
+        if(max_area < area[i].first)
+        {
+            max_area = area[i].first;
+            temp_i = i + 1;
+        }
+    }
+
+    for(i=0;i<height;i++)
+    {
+        for(j=0;j<width;j++)
+        {
+            if(input[pos(i,j)] == temp_i)
+            {
+                input[pos(i,j)] = 0x001F;
             }
             else
             {
@@ -851,11 +931,22 @@ void Blue_Hurdle(int &number)
         }
     }
 
-
+    if(max_area >= 1000)
+    {
+        number++;
+        Motion_Command(SoundPlay);
+        Motion_Command(GOSTRAIGHT_LOOKDOWN90);
+        Motion_Command(GOSTRAIGHT_LOOKDOWN90);
+        Motion_Command(SoundPlay);
+        Motion_Command(SoundPlay);
+    }
+    else
+    {
+        Motion_Command(GOSTRAIGHT_LOOKDOWN90);
+    }
 
     draw_fpga_video_data_full(input);
     flip();
     free(input);
     return;
 }
-

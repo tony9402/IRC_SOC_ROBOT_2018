@@ -18,6 +18,8 @@
 #define GOSTRAIGHT_LOOKDOWN90  2
 #define RED_DUMBLING           3
 #define RED_DOWN               4
+#define BLUE_DUMBLING          5
+#define TURNLEFT_90            6
 #define GOLEFT                 8
 #define GORIGHT                7
 #define TURNLEFT               11
