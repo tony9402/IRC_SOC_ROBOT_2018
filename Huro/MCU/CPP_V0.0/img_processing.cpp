@@ -4,6 +4,7 @@
 #include <vector>
 #include <queue>
 #include <stack>
+#include <algorithm>
 
 #include "img_processing.h"
 
@@ -80,13 +81,26 @@ int FindColor(U16 rgb)
 }
 
 //BLACK_CHECK
+// bool ISBLACK(U16 rgb)
+// {
+//     BYTE red = red5(rgb);
+//     BYTE green = green6(rgb);
+//     BYTE blue = blue5(rgb);
+
+//     return (abs(blue-red) <= 2 && abs((green>>1) - blue) <= 3 && abs((red - (green>>1)) <= 3) && red < 8 && green < 15 && blue < 8);
+// }
+
 bool ISBLACK(U16 rgb)
 {
     BYTE red = red5(rgb);
     BYTE green = green6(rgb);
     BYTE blue = blue5(rgb);
 
-    return (abs(blue-red) <= 2 && abs((green>>1) - blue) <= 3 && abs((red - (green>>1)) <= 3) && red < 8 && green < 15 && blue < 8);
+    if(abs(blue-red)<=4&&abs((green>>1)-blue)<=7&&abs(red-(green>>1))<=7&&red<24&&green<48&&blue<24)
+    {
+        return true;
+    }
+    return false;
 }
 
 //RED_CHECK
@@ -397,7 +411,7 @@ void WalkOnGreenBrigde(int &number)
             {
                 //GoGo
                 printf("#1 GoGo\n");
-                Send_Command(15);
+                Send_Command(GOSTRAIGHT);
                 wait_for_stop();
             }
             else
@@ -406,14 +420,14 @@ void WalkOnGreenBrigde(int &number)
                 {
                     //Turn Right
                     printf("#2 Turn Right\n");
-                    Send_Command(10);
+                    Send_Command(TURNRIGHT);
                     wait_for_stop();
                 }
                 else if(Mid_down <= MID_X && MID_X <= Mid_up)
                 {
                     //Turn Left
                     printf("#3 Turn Left\n");
-                    Send_Command(11);
+                    Send_Command(TURNLEFT);
                     wait_for_stop();
                 }
             }
@@ -425,14 +439,14 @@ void WalkOnGreenBrigde(int &number)
                 if(MID_X >= 60)
                 {
                     printf("#new6 Turn Right\n");
-                    Send_Command(10);
+                    Send_Command(TURNRIGHT);
                     wait_for_stop();
                 }
                 else
                 {
                     //Go Right
                     printf("#new3 Go Right\n");
-                    Send_Command(8);
+                    Send_Command(GORIGHT);
                     wait_for_stop();
                 }
             }
@@ -440,7 +454,7 @@ void WalkOnGreenBrigde(int &number)
             {
                 //Go Right
                 printf("#4 Go Right\n");
-                Send_Command(8);
+                Send_Command(GORIGHT);
                 wait_for_stop();
             }
             else 
@@ -449,7 +463,7 @@ void WalkOnGreenBrigde(int &number)
                 {
                     //Turn Right
                     printf("#5 Turn Right\n");
-                    Send_Command(10);
+                    Send_Command(TURNRIGHT);
                     wait_for_stop();
                 }
                 else
@@ -457,7 +471,7 @@ void WalkOnGreenBrigde(int &number)
                     if(abs(MID_X - Mid_down) - abs(MID_X - Mid_up) <= 3)
                     {
                         printf("#new2 Go Right\n");
-                        Send_Command(8);
+                        Send_Command(GORIGHT);
                         wait_for_stop();
                     }
                     else
@@ -475,13 +489,13 @@ void WalkOnGreenBrigde(int &number)
                 //Go Left
                 if(MID_X <= 123){
                     printf("#new5 Turn Left\n");
-                    Send_Command(11);
+                    Send_Command(TURNLEFT);
                     wait_for_stop();
                 }
                 else
                 {
                     printf("#new4 Go Left\n");
-                    Send_Command(7);
+                    Send_Command(GOLEFT);
                     wait_for_stop();
                 }
             }
@@ -489,7 +503,7 @@ void WalkOnGreenBrigde(int &number)
             {
                 //Go Left
                 printf("#7 Go Left\n");
-                Send_Command(7);
+                Send_Command(GOLEFT);
                 wait_for_stop();
             }
             else
@@ -498,7 +512,7 @@ void WalkOnGreenBrigde(int &number)
                 {
                     //Turn Left
                     printf("#8 Turn Left\n");
-                    Send_Command(11);
+                    Send_Command(TURNLEFT);
                     wait_for_stop();
                 }
                 else
@@ -506,7 +520,7 @@ void WalkOnGreenBrigde(int &number)
                     if(abs(MID_X - Mid_down) - abs(MID_X - Mid_up) <= 3)
                     {
                         printf("#new1 Go Left\n");
-                        Send_Command(7);
+                        Send_Command(GOLEFT);
                         wait_for_stop();
                     }
                     else
@@ -612,6 +626,58 @@ void YellowGate(int &number)
     return;
 }
 
+void BeforeStart(int &Stage)
+{
+   printf("0번\n");
+   U16* input = (U16*)malloc(2 * 180 * 120);
+   read_fpga_video_data(input);
+   short i, j;
+   short YellowCnt = 0;
+   printf("1번:%d\n", YellowCnt);
+   for (i = 0; i < 120; i++)
+   {
+      for (j = 0; j < 180; j++)
+      {
+         if (FindColor(input[pos(i,j)])==IsYellow) YellowCnt++;
+      }
+   }
+   printf("2번%d\n", YellowCnt);
+   if (YellowCnt > 3000) (Stage)++;//1st try:1000,2nd try:700
+   printf("3번%d\n", Stage);
+   draw_fpga_video_data_full(input);
+   flip();
+   free(input);
+}
+
+void StartBarigate(int &Stage)
+{
+   short i, j;
+   short YellowCnt = 0, BlackCnt = 0;
+   U16 *input = (U16*)malloc(2 * 180 * 120);
+   read_fpga_video_data(input);
+   for (i = 0; i < 120; i++)
+   {
+      for (j = 0; j < 180; j++)
+      {
+         if (FindColor(input[pos(i, j)]) == IsYellow) YellowCnt++;
+      }
+   }
+   if (YellowCnt < 3000)
+   {
+      //walkslowly();
+      //walkslowly();
+      //walkslowly();
+      Motion_Command(1);
+      Motion_Command(1);
+      Motion_Command(1);
+      (Stage)++;
+   }
+   YellowCnt = 0;
+   draw_fpga_video_data_full(input);
+   flip();
+   free(input);
+}
+
 //RED 2_1
 void Red_Stair(int &number)
 {
@@ -684,8 +750,8 @@ void Red_Stair(int &number)
         else
         {
             Motion_Command(SoundPlay);
-            Motion_Command(LOOKDOWN90);
-            DelayLoop(10000000);
+            Motion_Command(HEAD_DOWN_90);
+            delay();
             read_fpga_video_data(input);
             draw_fpga_video_data_full(input);
             flip();
@@ -788,7 +854,7 @@ void Go_Down_Red_Stair(int &number)
     if(!LOOKDOWN90_CHECK)
     {
         LOOKDOWN90_CHECK = true;
-        Motion_Command(LOOKDOWN90);
+        Motion_Command(HEAD_DOWN_90);
     }
 
     read_fpga_video_data(input);
@@ -863,8 +929,8 @@ void Blue_Hurdle(int &number)
     if(!DOWN_CHECK)
     {
         DOWN_CHECK = true;
-        Motion_Command(LOOKDOWN90);
-        DelayLoop(10000000);
+        Motion_Command(HEAD_DOWN_90);
+        delay();
     }
 
     U16 *input = (U16*)malloc(2*180*120);
@@ -948,5 +1014,375 @@ void Blue_Hurdle(int &number)
     draw_fpga_video_data_full(input);
     flip();
     free(input);
+    return;
+}
+
+#define Mine_area_min 500
+#define Mine_area_max 2000
+
+void Find_Mine(int &number)
+{
+    short i, j;
+
+    U16 *input = (U16*)malloc(2*180*120);
+    read_fpga_video_data(input);
+
+    vector<pair<U32, POS> > area;
+    Range range;
+    range.start_x = 40;
+    range.end_x = 140;
+    range.start_y = 40;
+    range.end_y = 90;
+    
+    for(i=0;i<height;i++)
+    {
+        for(j=0;j<width;j++)
+        {
+            if(IsVaild(i,j,range))
+            {
+                if(FindColor(input[pos(i,j)]) == IsBlack)
+                {
+                    input[pos(i,j)] = 0xFFFF;
+                }
+                else
+                {
+                    input[pos(i,j)] = 0x0000;
+                }
+            }
+            else
+            {
+                input[pos(i,j)] = 0x0000;
+            }
+        }
+    }
+
+    ColorLabeling(0xFFFF, area, range, input);
+    POS mine_pos;
+    U16 max_i = 255;
+    bool MINE_EXIST = false;
+
+    if(area.size()==0)
+    {
+        Motion_Command(GOSTRAIGHT_LOOKDOWN90);
+    }
+    else
+    {
+        for(i=0;i<area.size();i++)
+        {
+            if(Mine_area_min <= area[i].first && area[i].first <= Mine_area_max)
+            {
+                MINE_EXIST = true;
+                if(area[i].second.y < max_i)
+                {
+                    max_i = area[i].second.y;
+                    mine_pos = area[i].second;
+                }
+            }
+        }
+
+        if(!MINE_EXIST)
+        {
+            Motion_Command(GOSTRAIGHT_LOOKDOWN90);
+        }
+    }
+
+    draw_fpga_video_data_full(input);
+    flip();
+    free(input);
+    return;
+}
+
+U8 make_gray(U16 input)
+{
+	U8 gray;
+
+	U8 red, green, blue;
+	red = red5(input) << 3 | red5(input) >> 2;
+	green = green6(input) << 2 | green6(input) >> 4;
+	blue = blue5(input) << 3 | blue5(input) >> 2;
+
+	gray = (red + green + blue) / 3;
+	return gray;
+}
+
+U16 make_gray_16(U16 input)
+{
+	U8 gray = make_gray(input);
+	U16 out_gray = ((gray >> 3) << 11) | ((gray >> 2) << 5) | (gray>>3);
+	return out_gray;
+}
+
+U16 make_16(U16 gray)
+{
+	return ((gray >> 3) << 11) | ((gray >> 2) << 5) | (gray>>3);
+}
+
+void Line_Search(U16 *input)
+{
+    short i,j;
+    U32 area_sum = 0;
+    for(i=0;i<height;i++)
+    {
+        for(j=0;j<width;j++)
+        {
+            area_sum += make_gray(input[pos(i,j)]);
+        }
+    }
+    U16 area_thred = area_sum / (height*width);
+    for(i=0;i<height;i++)
+    {
+        for(j=0;j<width;j++)
+        {
+            if(input[pos(i,j)] <= make_16(area_thred))
+            {
+                input[pos(i,j)] = 0xFFFF;
+            }
+            else
+            {
+                input[pos(i,j)] = 0x0000;
+            }
+        }
+    }
+}
+
+#define LINE_AREA_MIN 50
+#define LINE_AREA_MAX 4000
+
+void Line_Match(int &number)
+{
+    short i, j;
+    //static 
+    bool IsRight = true;
+    U16 *input = (U16*)malloc(2*180*120);
+    
+    if(IsRight){
+        Motion_Command(HEAD_RIGHT_90);
+        delay();
+        Motion_Command(HEAD_DOWN_60);
+        delay();
+        read_fpga_video_data(input);
+        short i, j;
+        
+        for(i=0;i<height;i++)
+        {
+            for(j=0;j<width;j++)
+            {
+                if(FindColor(input[pos(i,j)]) ==IsYellow)
+                {
+                    input[pos(i,j)] = 0xFFFF;
+                }
+                else
+                {
+                    input[pos(i,j)] = 0x0000;
+                }
+            }
+        }
+        //Line_Search(input);
+
+
+
+        vector<pair<U32, POS> > area;
+        Range range;
+        range.start_x = 0;
+        range.end_x = 90;
+        range.start_y = 0;
+        range.end_y = 120;
+
+        ColorLabeling(0xFFFF,area,range,input);
+        
+         if(area.size() == 0)
+        {
+            clear_screen();
+            flip();
+            free(input);
+            IsRight = false;
+            return;
+        }
+
+        U16 temp_i = 0;
+        U32 Max_area = 0;
+
+        for(i=0;i<area.size();i++)
+        {
+            if(LINE_AREA_MIN <= area[i].first && area[i].first <= LINE_AREA_MAX)
+            {
+                if(Max_area < area[i].first)
+                {
+                    Max_area = area[i].first;
+                    temp_i = i+1;
+                }
+            }
+        }
+
+        if(temp_i == 0)
+        {
+            clear_screen();
+            flip();
+            free(input);
+            return;
+        }
+
+        Range area_range = {255,0,255,0};
+
+        for(i=0;i<height;i++)
+        {
+            for(j=0;j<width;j++)
+            {
+                if(input[pos(i,j)] == temp_i)
+                {
+                    input[pos(i,j)] = 0xFFFF;
+                    if(i<area_range.start_y)area_range.start_y=i;
+                    if(i>area_range.end_y)area_range.end_y=i;
+                    if(j<area_range.start_x)area_range.start_x=j;
+                    if(j>area_range.end_x)area_range.end_x=j;
+                }
+                else
+                {
+                    input[pos(i,j)] = 0x0000;
+                }
+            }
+        }
+
+        U16 right_y=0, left_y=0,mid_y=0;
+        U32 right_y_cnt=0, right_y_sum=0;
+        U32 left_y_cnt=0, left_y_sum=0;
+        mid_y = area[temp_i-1].second.y;
+
+        for(i=area_range.start_y;i<area_range.end_y;i++)
+        {
+            for(j=area_range.start_x;j<area_range.end_x;j++)
+            {
+                if(input[pos(i,j)] == 0xFFFF)
+                {
+                    if(j<=area_range.start_x+10)
+                    {
+                        right_y_cnt++;
+                        right_y_sum+=i;
+                    }
+                    if(j>=area_range.start_x-10)
+                    {
+                        left_y_cnt++;
+                        left_y_sum+=i;
+                    }
+                }
+            }
+        }
+
+        right_y = right_y_sum / right_y_cnt;
+        left_y = left_y_sum / left_y_cnt;
+
+        printf("%d %d %d\n",mid_y, right_y, left_y);
+        if(abs(mid_y - (right_y + left_y) / 2) <= 1)
+        {
+            //Line_Match;
+            if(abs(left_y - right_y) <= 2){
+                Motion_Command(SoundPlay);
+            }
+            else if(left_y < right_y)
+            {
+                Motion_Command(TURNLEFT);
+            }
+            else if(right_y > left_y)
+            {
+                Motion_Command(TURNRIGHT);
+            }
+        }
+        else if(left_y < right_y)
+        {
+            //Turn left
+            Motion_Command(TURNLEFT);
+        }
+        else
+        {
+            //Turn right
+            Motion_Command(TURNRIGHT);
+        }
+
+        
+        draw_fpga_video_data_full(input);
+        flip();
+        free(input);
+
+        
+    }
+    else
+    {
+        IsRight = true;
+        Motion_Command(HEAD_LEFT_90);
+        delay();
+        read_fpga_video_data(input);
+
+        for(i=0;i<height;i++)
+        {
+            for(j=0;j<width;j++)
+            {
+                if(FindColor(input[pos(i,j)]) == IsBlack)
+                {
+                    input[pos(i,j)] = 0xFFFF;
+                }
+                else
+                {
+                    input[pos(i,j)] = 0x0000;
+                }
+            }
+        }
+
+        vector<pair<U32, POS> > area;
+        Range range;
+
+        range.start_x = 0;
+        range.end_x = 90;
+        range.start_y = 0;
+        range.end_y = 120;
+
+        ColorLabeling(0xFFFF,area,range,input);
+
+
+
+        draw_fpga_video_data_full(input);
+        flip();
+        free(input);
+    }
+    return;
+}
+
+void ImageShow()
+{
+    short i, j;
+    U16 *input = (U16*)malloc(2*180*120);
+    read_fpga_video_data(input);
+    U8 *gray = (U8*)malloc(180*120);
+    U16 *histogram = (U16*)malloc(2*256);
+    fill(histogram, histogram + 256, 0);
+
+    U32 max_histo=0;
+
+    for(i=0;i<height;i++)
+    {
+        for(j=0;j<width;j++)
+        {
+            gray[pos(i,j)]=make_gray(input[pos(i,j)]);
+            if(gray[pos(i,j)]>max_histo)max_histo=gray[pos(i,j)];
+            histogram[gray[pos(i,j)]]++;
+            input[pos(i,j)] = 0x0000;
+        }
+    }
+    
+    for(i=0;i<height;i++)
+    {
+        for(j=0;j<width;j++)
+        {
+            if(i<=histogram[(U16)(j*1.5)])
+            {
+                input[pos(i,j)] = 0xFFFF;
+            }
+        }
+    }
+
+    draw_fpga_video_data_full(input);
+    flip();
+    free(input);
+    free(gray);
+    free(histogram);
     return;
 }

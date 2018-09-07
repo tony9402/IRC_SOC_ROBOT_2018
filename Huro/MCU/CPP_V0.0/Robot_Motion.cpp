@@ -7,6 +7,12 @@ void Motion_Command(U8 Message_Num)
     wait_for_stop();
 }
 
+void delay()
+{
+    DelayLoop(10000000);
+	return;
+}
+
 void wait_for_stop()
 {
 	unsigned char buf[1] = { 0, };

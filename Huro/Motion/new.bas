@@ -2936,12 +2936,12 @@ GO_A_LITTLE:
 
 MYTURN:
     SPEED 8
-	MOVE G6A, 105,  91, 145,  89, 100,  
-MOVE G6D,  104,  75, 145,  89, 100,  
-MOVE G6B, 100,  30,  80,  ,  ,  
-MOVE G6C, 100,  30,  80,  ,  ,  
+    MOVE G6A, 105,  91, 145,  89, 100,
+    MOVE G6D,  104,  75, 145,  89, 100,
+    MOVE G6B, 100,  30,  80,  ,  ,
+    MOVE G6C, 100,  30,  80,  ,  ,
 
-   
+
 
     WAIT
 
@@ -2951,7 +2951,7 @@ MOVE G6C, 100,  30,  80,  ,  ,
 
 YOURTURN:
 
-	RETURN
+    RETURN
 
     '************************************************
 MAIN: '라벨설정
@@ -3001,7 +3001,7 @@ MAIN_2:
     'GOSUB 우살짝
     'GOSUB Rturn
     'GOSUB GO_A_LITTLE
-    GOSUB MYTURN
+    'GOSUB MYTURN
 
     GOTO MAIN	
     '*******************************************

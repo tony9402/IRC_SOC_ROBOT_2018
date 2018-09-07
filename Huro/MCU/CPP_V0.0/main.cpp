@@ -16,13 +16,12 @@
 #include "Robot_Motion.h"
 #include "init.h"
 
-#define LINE_AREA_MAX 3500
-
 int main()
 {
     short i, j;
     int ret;
     int Stage = 0;
+	int SoundStage = 0;
     init_console();
 	ret = uart_open();
 	if (ret < 0) return EXIT_FAILURE;
@@ -33,16 +32,43 @@ int main()
 	}
 	direct_camera_display_off();
 	clear_screen();
-   
+    U16 *input = (U16*)malloc(2*180*120);
     while(1)
 	{
-		if(Stage==0)Blue_Hurdle(Stage);
-		//if(Stage==0)YellowGate(Stage);
-		//if(Stage==1)Red_Stair(Stage);
-		//if(Stage==2)Up_Red_Stair(Stage);
-		//if(Stage==3)Go_Down_Red_Stair(Stage);
+		if (Stage == 0) {
+         if (SoundStage == 0)
+         {
+            Send_Command(SoundPlay);
+            SoundStage++;
+         }
+         BeforeStart(Stage);
+      }
+      else if (Stage == 1) {
+         if (SoundStage == 1)
+         {
+            Send_Command(SoundPlay);
+            SoundStage++;
+         }
+         StartBarigate(Stage);
+      }
+      else if (Stage == 2) {
+         if (SoundStage == 2)
+         {
+            Send_Command(SoundPlay);
+            SoundStage++;
+         }
+         Up_Red_Stair(Stage);
+      }
+      else if (Stage == 3) {
+         if (SoundStage == 3)
+         {
+            Send_Command(SoundPlay);
+            SoundStage++;
+         }
+         Go_Down_Red_Stair(Stage);
+	  }
 	}
-	
+	free(input);
     uart_close();
 	close_graphic();
     return 0;

@@ -20,13 +20,23 @@
 #define RED_DOWN               4
 #define BLUE_DUMBLING          5
 #define TURNLEFT_90            6
-#define GOLEFT                 8
-#define GORIGHT                7
-#define TURNLEFT               11
-#define TURNRIGHT              10
-#define LOOKDOWN90             13
-#define SoundPlay              24
-#define UP_RED_STAIR           27
+#define GOLEFT                 7
+#define GORIGHT                8
+#define GO_UP                  9
+#define GO_DOWN                10
+
+
+#define TURNLEFT               23
+#define TURNRIGHT              24
+#define LOOK_FORWARD           25
+#define HEAD_DOWN_30           26
+#define HEAD_DOWN_60           27
+#define HEAD_DOWN_90           28
+#define HEAD_MID_90            29
+#define HEAD_RIGHT_90          30
+#define HEAD_LEFT_90           31
+#define SoundPlay              32
 
 void Motion_Command(U8 Message_Num);
 void wait_for_stop();
+void delay();

@@ -81,6 +81,7 @@ typedef struct
     BYTE end_y;
 }Range;
 
+bool IsVaild(U16 y, U16 x, Range range);
 HSV ChangetoHSV(U16 rgb);
 int FindColor(U16 rgb); 
 int ColorLabelingFULL(U16 color, vector<pair<pair<U32, POS>, Range> > &area, U16 *input);
@@ -93,9 +94,15 @@ bool ISGREEN(U16 rgb);
 bool ISORANGE(U16 rgb);
 void WalkOnGreenBrigde(int &number);
 void YellowGate(int &number);
+void BeforeStart(int &Stage);
+void StartBarigate(int &Stage);
 void Red_Stair(int &number);
 void Up_Red_Stair(int &number);
 void Go_Down_Red_Stair(int &number);
 void Blue_Hurdle(int &number);
+
+void Line_Match(int &number);
+
+void ImageShow();
 
 #endif
