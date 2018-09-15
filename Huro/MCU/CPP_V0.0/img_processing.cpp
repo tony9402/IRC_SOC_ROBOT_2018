@@ -743,19 +743,23 @@ void Red_Stair(int &number)
         }
 
         POS pos = area[temp_i-1].first.second;
-        if(pos.y >= 65)
+        if(pos.y >= 90)
         {
             Motion_Command(GOSTRAIGHT);
         }
         else
         {
             Motion_Command(SoundPlay);
+            Motion_Command(SoundPlay);
+            Motion_Command(SoundPlay);
             Motion_Command(HEAD_DOWN_90);
             delay();
             read_fpga_video_data(input);
             draw_fpga_video_data_full(input);
             flip();
+            free(input);
             Look_Down_Check = true;
+            return;
         }
     }
     else if(Look_Down_Check)
@@ -799,7 +803,7 @@ void Red_Stair(int &number)
 
             POS pos = area[temp_i - 1].second;
             printf("%d\n",max_area);
-            if(max_area<=4000)
+            if(max_area<=8500)
             {
                 Motion_Command(GOSTRAIGHT_LOOKDOWN90);
             }
@@ -813,7 +817,6 @@ void Red_Stair(int &number)
         }
         else
         {
-            Motion_Command(SoundPlay);
             Motion_Command(GOSTRAIGHT_LOOKDOWN90);
         }
     }
@@ -855,15 +858,27 @@ void Go_Down_Red_Stair(int &number)
     {
         LOOKDOWN90_CHECK = true;
         Motion_Command(HEAD_DOWN_90);
+        delay();
+        read_fpga_video_data(input);
+        draw_fpga_video_data_full(input);
+        flip();
+        free(input);
+        return;
     }
 
     read_fpga_video_data(input);
     
-    for(i=0;i<height;i++)
+    Range range;
+    range.start_x = 0;
+    range.end_x = 180;
+    range.start_y = 60;
+    range.end_y = 120;
+
+    for(i=range.start_y;i<range.end_y;i++)
     {
-        for(j=0;j<width;j++)
+        for(j=range.start_x;j<range.end_x;j++)
         {
-            if(ISRED(input[pos(i,j)]))
+            if(FindColor(input[pos(i,j)])==IsRed)
             {
                 input[pos(i,j)] = 0xFFFF;
             }
@@ -875,11 +890,7 @@ void Go_Down_Red_Stair(int &number)
     }
     
     vector<pair<U32, POS> > area;
-    Range range;
-    range.start_x = 0;
-    range.end_x = 180;
-    range.start_y = 60;
-    range.end_y = 120;
+    
     ColorLabeling(0xFFFF, area, range,input);
 
     U32 max_area = 0;
@@ -903,10 +914,15 @@ void Go_Down_Red_Stair(int &number)
         }
     }
 
-    if(max_area <= 550)
+    draw_fpga_video_data_full(input);
+    flip();
+
+    if(max_area <= 2600 || temp_i == 0)
     {
-        Motion_Command(RED_DOWN);
+        Motion_Command(4);
         number++;
+        free(input);
+        return;
     }
     else
     {
@@ -915,8 +931,6 @@ void Go_Down_Red_Stair(int &number)
 
 
 
-    draw_fpga_video_data_full(input);
-    flip();
     free(input);
     return;
 }

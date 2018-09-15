@@ -32,44 +32,50 @@ int main()
 	}
 	direct_camera_display_off();
 	clear_screen();
-    U16 *input = (U16*)malloc(2*180*120);
-    while(1)
+	while (1)
 	{
 		if (Stage == 0) {
-         if (SoundStage == 0)
-         {
-            Send_Command(SoundPlay);
-            SoundStage++;
-         }
-         BeforeStart(Stage);
-      }
-      else if (Stage == 1) {
-         if (SoundStage == 1)
-         {
-            Send_Command(SoundPlay);
-            SoundStage++;
-         }
-         StartBarigate(Stage);
-      }
-      else if (Stage == 2) {
-         if (SoundStage == 2)
-         {
-            Send_Command(SoundPlay);
-            SoundStage++;
-         }
-         Up_Red_Stair(Stage);
-      }
-      else if (Stage == 3) {
-         if (SoundStage == 3)
-         {
-            Send_Command(SoundPlay);
-            SoundStage++;
-         }
-         Go_Down_Red_Stair(Stage);
-	  }
+			if (SoundStage == 0)
+			{
+				Send_Command(SoundPlay);
+				SoundStage++;
+			}
+			BeforeStart(Stage);
+		}
+		else if (Stage == 1) {
+			if (SoundStage == 1)
+			{
+				Send_Command(SoundPlay);
+				SoundStage++;
+			}
+			StartBarigate(Stage);
+		}
+		else if (Stage == 2) {
+			if (SoundStage == 2)
+			{
+				Send_Command(SoundPlay);
+				SoundStage++;
+			}
+			Red_Stair(Stage);
+		}
+		else if (Stage == 3) {
+			if (SoundStage == 3)
+			{
+				Send_Command(SoundPlay);
+				SoundStage++;
+			}
+			Up_Red_Stair(Stage);
+		}
+		else if (Stage == 4) {
+			if (SoundStage == 4)
+			{
+				Send_Command(SoundPlay);
+				SoundStage++;
+			}
+			Go_Down_Red_Stair(Stage);
+		}
 	}
-	free(input);
-    uart_close();
+	 uart_close();
 	close_graphic();
     return 0;
 }
