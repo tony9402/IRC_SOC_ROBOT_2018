@@ -17,9 +17,11 @@
 #include "init.h"
 
 #define PRINT_GREEN_BRIDGE_INFO   false
-#define PRINT_GREEN_BRIDGE_MOTION true
+//#define PRINT_GREEN_BRIDGE_MOTION true
+#define PRINT_GREEN_BRIDGE_MOTION false
 
-#define DATA_SAVE_TXT             true
+//#define DATA_SAVE_TXT             true
+#define DATA_SAVE_TXT             false
 
 #define MINE_AREA_MIN 0
 #define MINE_AREA_MAX 10000
@@ -78,7 +80,7 @@ typedef struct{
 
 bool Labeling_Area_Vaild(short& y, short& x, Range& range);
 void ChangeColor(U16 *input, const int &color);
-U16 ColorLabeling(const U16 &color, Labeling &area, Range &range, U16 *input);
+U16 ColorLabeling(const U16 &color, Labeling &area, const Range &range, U16 *input);
 void WalkOnGreenBrigde(int &number);
 void BeforeStart(int &Stage);
 void StartBarigate(int &Stage);

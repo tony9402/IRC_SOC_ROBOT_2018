@@ -78,7 +78,7 @@ bool ISBLACK(U16 rgb)
 bool ISRED(U16 rgb)
 {
     HSV hsv = ChangetoHSV(rgb);
-    return (hsv.H <= 10 || hsv.H >= 225);
+    return (hsv.H <= 20 || hsv.H >= 220);
 }
 
 //GREEN_CHECK

@@ -14,7 +14,7 @@ using namespace std;
 int Robot_Head_position = 0;
 int Robot_Head_front_position = 0;
 
-bool Labeling_Area_Vaild(short& y, short& x, Range& range)
+bool Labeling_Area_Vaild(short& y, short& x, const Range& range)
 {
     return (range.start_x<=x&&x<=range.end_x&&range.start_y<=y&&y<=range.end_y);
 }
@@ -39,15 +39,15 @@ void ChangeColor(U16 *input, const int &color)
     return;
 }   
 
-U16 ColorLabeling(const U16 &color, Labeling &area, Range &range, U16 *input)
+U16 ColorLabeling(const U16 &color, Labeling &area, const Range &range, U16 *input)
 {
     int count = 0;
     short i,j,k;
-    pss now;
+    pair<short,short> now;
     const short dx[] = {-1,1,0,0};
     const short dy[] = {0,0,-1,1};
 
-    queue<pss > q;
+    queue<pair<short, short> > q;
     U32 area_sum = 0;
     U32 sum_x, sum_y;
     U32 max_area = 0;
@@ -58,15 +58,6 @@ U16 ColorLabeling(const U16 &color, Labeling &area, Range &range, U16 *input)
 
     POS pos_input;
 
-    for(i=0;i<height;i++)
-    {
-        if(i<=range.start_y&&range.end_y<i)continue;
-        for(j=0;j<width;j++)
-        {
-            if(j<=range.start_x&&range.end_x<j)continue;
-            input[pos(i,j)]=0x0000;
-        }
-    }
     for(i=range.start_y;i<range.end_y;i++)
     {
         for(j=range.start_x;j<range.end_x;j++)
@@ -91,8 +82,9 @@ U16 ColorLabeling(const U16 &color, Labeling &area, Range &range, U16 *input)
                     {
                         short qy = now.first + dy[k];
                         short qx = now.second + dx[k];
+						
                         if(!Labeling_Area_Vaild(qy,qx,range))continue;
-                        if(input[pos(i,j)]==color&&!visit[pos(qy,qx)])
+                        if(input[pos(qy,qx)]==color&&!visit[pos(qy,qx)])
                         {
                             visit[pos(qy,qx)] = true;
                             input[pos(qy,qx)] = count;
@@ -402,7 +394,7 @@ void BeforeStart(int &Stage)
         }
     }
 
-    if(YellowCnt > 3000)
+    if(YellowCnt > 1500)
     {
         ++Stage;
     }
@@ -437,12 +429,13 @@ void StartBarigate(int &Stage)
         }
     }
 
-    if(YellowCnt < 3000)
+    if(YellowCnt < 1500)
     {
         for(i=0;i<3;i++)
         {
             Motion_Command(GOSTRAIGHT);
         }
+        Robot_Head_front_position == HEAD_DOWN_60;
         ++Stage;
     }
     
@@ -466,10 +459,11 @@ void Red_Stair(int &Stage)
 
     if(Robot_Head_position == HEAD_DOWN_60)
     {
-        range.start_x=0;
+		range.start_x = 0;
         range.end_x = width;
         range.start_y = 0;
         range.end_y = height;
+        printf("60\n");
     }
     else if(Robot_Head_position == HEAD_DOWN_90)
     {
@@ -479,37 +473,40 @@ void Red_Stair(int &Stage)
         range.end_x=width;
         range.start_y=60;
         range.end_y=height;
+        printf("90\n");
     }
 
     U16 temp_i = ColorLabeling(0xFFFF, area, range, input);
-    U32 max_area;
+    printf("temp : %d\n",temp_i);
+    U32 max_area=0;
     POS pos;
 
     if(Robot_Head_position == HEAD_DOWN_60){
         if(temp_i)
         {
             max_area = area[temp_i - 1].first;
-            if(max_area>=2000)
+			for (i = 0; i<height; i++)
+			{
+				for (j = 0; j<width; j++)
+				{
+					if (input[pos(i, j)] == temp_i)
+					{
+						input[pos(i, j)] = 0xF800;
+					}
+					else
+					{
+						input[pos(i, j)] = 0x0000;
+					}
+				}
+			}
+            if(max_area >= 2000)
             {
-                for(i=0;i<height;i++)
-                {
-                    for(j=0;j<width;j++)
-                    {
-                        if(input[pos(i,j)] == temp_i)
-                        {
-                            input[pos(i,j)] = 0xF800;
-                        }
-                        else
-                        {
-                            input[pos(i,j)] = 0x0000;
-                        }
-                    }
-                }
-
                 pos = area[temp_i - 1].second;
 
-                if(pos.y >= 90)
+                if(pos.y >= 80)
                 {
+					Motion_Command(SoundPlay);
+					Motion_Command(SoundPlay);
                     Motion_Command(GOSTRAIGHT);
                 }
                 else
@@ -529,6 +526,7 @@ void Red_Stair(int &Stage)
             else
             {
                 Motion_Command(GOSTRAIGHT);
+				
                 draw_fpga_video_data_full(input);
                 flip();
                 free(input);
@@ -540,7 +538,25 @@ void Red_Stair(int &Stage)
     {
         if(temp_i)
         {
-            if(max_area <= 8500)
+			Motion_Command(SoundPlay);
+			max_area = area[temp_i - 1].first;
+			for (i = 0; i < height; i++)
+			{
+				for (j = 0; j < width; j++)
+				{
+					if (input[pos(i, j)] == temp_i)
+					{
+						input[pos(i, j)] = 0xF800;
+					}
+					else
+					{
+						input[pos(i, j)] = 0x0000;
+					}
+				}
+			}
+
+			printf("area : %d\n", max_area);
+            if(max_area <= 2600) //3600 //3000 // 3350
             {
                 Motion_Command(GOSTRAIGHT_LOOKDOWN90);
             }
@@ -549,8 +565,8 @@ void Red_Stair(int &Stage)
                 draw_fpga_video_data_full(input);
                 flip();
                 Motion_Command(SoundPlay);
-                Motion_Command(HEAD_DOWN_60);
-                delay();
+                /*Motion_Command(HEAD_DOWN_60);
+                delay();*/
                 Robot_Head_position = HEAD_DOWN_60;
                 ++Stage;
                 free(input);
@@ -577,6 +593,9 @@ void Up_Red_Stair(int &Stage)
     draw_fpga_video_data_full(input);
     flip();
     
+	Motion_Command(GOSTRAIGHT_LOOKDOWN90);
+	Motion_Command(GOSTRAIGHT_LOOKDOWN90);
+
     Motion_Command(RED_DUMBLING);
     //Robot_Head_position = HEAD_DOWN_60;
     
@@ -591,7 +610,7 @@ void Go_Down_Red_Stair(int &Stage)
     U16 *input = (U16*)malloc(2*height*width);
     short i,j;
 
-    if(Robot_Head_position != HEAD_DOWN_90)
+    if(Robot_Head_position == HEAD_DOWN_90)
     {
         Robot_Head_position = HEAD_DOWN_60;
         Motion_Command(HEAD_DOWN_60);
@@ -652,49 +671,133 @@ void Go_Down_Red_Stair(int &Stage)
 }
 
 //Find mine
+//양 옆 거리 측정하는 소스 짜기
 void Find_Mine(int &Stage)
 {
+	static bool IsCloseRight = false;
+	static bool IsCloseLeft = false;
+
     short i,j;
     U16 *input = (U16*)malloc(2*height*width);
-    read_fpga_video_data(input);
+	U16 *blue = (U16*)malloc(2*height*width);
+	if (Robot_Head_position != HEAD_DOWN_90)
+	{
+		Robot_Head_position = HEAD_DOWN_90;
+		Motion_Command(HEAD_DOWN_90);
+		delay();
+	}
 
-    Labeling area;
+    read_fpga_video_data(input);
+	memcpy(blue, input, sizeof(input));
+
+	Range blue_range = { 0,180,60,120 };
+	Labeling area;
+
+	for (i = 0; i < height; i++)
+	{
+		for (j = 0; j < width; j++)
+		{
+			input[pos(i, j)] = FindColor(input[pos(i, j)]) == IsBlack ? 0xFFFF : 0x0000;
+			blue[pos(i, j)] = FindColor(input[pos(i, j)]) == IsBlue ? 0xFFFF : 0x0000;
+		}
+	}
+
+	U16 Blue_exist = ColorLabeling(0xFFFF, area, blue_range, blue);
+
+	if (Blue_exist)
+	{
+		if (area[Blue_exist - 1].first > 1300)
+		{
+			++Stage;
+			for (i = 0; i < height; i++)
+			{
+				for (j = 0; j < width; j++)
+				{
+					if (blue[pos(i, j)] == Blue_exist)
+					{
+						blue[pos(i, j)] = Blue_exist;
+					}
+				}
+			}
+			draw_fpga_video_data_full(blue);
+			flip();
+			Motion_Command(SoundPlay);
+			Motion_Command(HEAD_DOWN_60);
+			Robot_Head_position = HEAD_DOWN_60;
+
+			free(input);
+			free(blue);
+			return;
+		}
+	}
+
+	free(blue);
+	area.clear();
+
     Range range = {40,140,40,90};
 
     ChangeColor(input,IsBlack);
     U16 mine_exist = ColorLabeling(0xFFFF,area,range,input);
 
     vector<POS> mine;
-    
-    if(mine_exist)
-    {
-        for(i=0;i<area.size();i++)
-        {
-            U32 mine_area = area[i].first;
-            if(MINE_AREA_MIN<=mine_area&&mine_area<=MINE_AREA_MAX)
-            {
-                mine.push_back(area[i].second);
-            }
-        }
-    }
-    else
-    {
-        Motion_Command(GOSTRAIGHT_LOOKDOWN90);
+	POS pos_mine;
+	U16 min_y;
 
-        draw_fpga_video_data_full(input);
-        flip();
-        free(input);
-        return;
-    }
+	for (i = 0; i < area.size(); i++)
+	{
+		U32 mine_area = area[i].first;
+		if (MINE_AREA_MIN <= mine_area && mine_area <= MINE_AREA_MAX)
+		{
+			mine.push_back(area[i].second);
+		}
+	}
 
-    //To Do
+	min_y = 255;
+	if (!mine.size())
+	{
+		for (i = 0; i < height; i++)
+		{
+			for (j = 0; j < width; j++)
+			{
+				input[pos(i, j)] = 0xFFFF;
+			}
+		}
+		draw_fpga_video_data_full(input);
+		flip();
+		free(input);
+		free(blue);
+		return;
+	}
+	else
+	{
+		for (i = 0; i < mine.size(); i++)
+		{
+			if (min_y > mine[i].y)
+			{
+				min_y = mine[i].y;
+				pos_mine = mine[i];
+			}
+		}
 
 
-    draw_fpga_video_data_full(input);
-    flip();
-    free(input);
-    return;
+		if (pos_mine.x <= 90)
+		{
+			//Go Right
+			Motion_Command(GORIGHT);
+		}
+		else
+		{
+			Motion_Command(GOLEFT);
+			//Go Left
+		}
+	}
+
+	draw_fpga_video_data_full(input);
+	flip();
+	free(input);
+	return;
 }
+
 
 void Blue_Hurdle(int &Stage)
 {
@@ -766,7 +869,7 @@ void Line_Search(U16 *input)
         Motion_Command(HEAD_LEFT_90);
         delay();
     }
-    if(Robot_Head_position != HEAD_DOWN_60)
+	else if(Robot_Head_position != HEAD_DOWN_60)
     {
         Robot_Head_position = HEAD_DOWN_60;
         Motion_Command(HEAD_DOWN_60);

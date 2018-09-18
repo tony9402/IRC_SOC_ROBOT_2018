@@ -889,7 +889,7 @@ void Go_Down_Red_Stair(int &number)
         }
     }
     
-    vector<pair<U32, POS> > area;
+    vector<pair<U32, POS> > area = vector<pair<U32, POS> >();
     
     ColorLabeling(0xFFFF, area, range,input);
 
@@ -919,6 +919,7 @@ void Go_Down_Red_Stair(int &number)
 
     if(max_area <= 2600 || temp_i == 0)
     {
+        
         Motion_Command(4);
         number++;
         free(input);

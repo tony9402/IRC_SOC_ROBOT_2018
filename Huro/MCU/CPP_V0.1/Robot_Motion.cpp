@@ -9,7 +9,7 @@ void Motion_Command(const U8 Message_Num)
 
 void delay()
 {
-    DelayLoop(10000000);
+    DelayLoop(30000000);
 	return;
 }
 

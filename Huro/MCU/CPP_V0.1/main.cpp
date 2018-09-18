@@ -53,6 +53,7 @@ int main()
 			if(Sound_Stage == 0)
 			{
 				++Sound_Stage;
+				Motion_Command(SoundPlay);
 			}
 			BeforeStart(Stage);
 		}	
@@ -61,6 +62,7 @@ int main()
 			if(Sound_Stage == 1)
 			{
 				++Sound_Stage;
+				Motion_Command(SoundPlay);
 			}
 			StartBarigate(Stage);
 		}
@@ -69,6 +71,7 @@ int main()
 			if(Sound_Stage == 2)
 			{
 				++Sound_Stage;
+				Motion_Command(SoundPlay);
 			}
 			Red_Stair(Stage);
 		}
@@ -77,6 +80,7 @@ int main()
 			if(Sound_Stage == 3)
 			{
 				++Sound_Stage;
+				Motion_Command(SoundPlay);
 			}
 			Up_Red_Stair(Stage);
 		}
@@ -85,6 +89,7 @@ int main()
 			if(Sound_Stage == 4)
 			{
 				++Sound_Stage;
+				Motion_Command(SoundPlay);
 			}
 			Go_Down_Red_Stair(Stage);
 		}
@@ -93,6 +98,7 @@ int main()
 			if(Sound_Stage == 5)
 			{
 				++Sound_Stage;
+				Motion_Command(SoundPlay);
 			}
 			Find_Mine(Stage);
 		}
@@ -101,6 +107,7 @@ int main()
 			if(Sound_Stage == 6)
 			{
 				++Sound_Stage;
+				Motion_Command(SoundPlay);
 			}
 			Blue_Hurdle(Stage);
 		}
@@ -109,14 +116,16 @@ int main()
 			if(Sound_Stage == 7)
 			{
 				++Sound_Stage;
+				Motion_Command(SoundPlay);
 			}
-
+			WalkOnGreenBrigde(Stage);
 		}
 		else if(Stage == 8)
 		{
 			if(Sound_Stage == 8)
 			{
 				++Sound_Stage;
+				Motion_Command(SoundPlay);
 			}
 
 		}
@@ -125,6 +134,7 @@ int main()
 			if(Sound_Stage == 9)
 			{
 				++Sound_Stage;
+				Motion_Command(SoundPlay);
 			}
 
 		}
